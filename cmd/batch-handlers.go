@@ -61,6 +61,8 @@ var globalBatchConfig batch.Config
 const (
 	// Keep the completed/failed job stats 3 days before removing it
 	oldJobsExpiration = 3 * 24 * time.Hour
+
+	redactedText = "**REDACTED**"
 )
 
 // BatchJobRequest this is an internal data structure not for external consumption.
@@ -73,6 +75,29 @@ type BatchJobRequest struct {
 	Expire    *BatchJobExpire      `yaml:"expire" json:"expire"`
 	ctx       context.Context      `msg:"-"`
 }
+
+// RedactSensitive will redact any sensitive information in b.
+func (j *BatchJobRequest) RedactSensitive() {
+	j.Replicate.RedactSensitive()
+	j.Expire.RedactSensitive()
+	j.KeyRotate.RedactSensitive()
+}
+
+// RedactSensitive will redact any sensitive information in b.
+func (r *BatchJobReplicateV1) RedactSensitive() {
+	if r == nil {
+		return
+	}
+	if r.Target.Creds.SecretKey != "" {
+		r.Target.Creds.SecretKey = redactedText
+	}
+	if r.Target.Creds.SessionToken != "" {
+		r.Target.Creds.SessionToken = redactedText
+	}
+}
+
+// RedactSensitive will redact any sensitive information in b.
+func (r *BatchJobKeyRotateV1) RedactSensitive() {}
 
 func notifyEndpoint(ctx context.Context, ri *batchJobInfo, endpoint, token string) error {
 	if endpoint == "" {
@@ -971,7 +996,7 @@ func (ri *batchJobInfo) updateAfter(ctx context.Context, api ObjectLayer, durati
 // Note: to be used only with batch jobs that affect multiple versions through
 // a single action. e.g batch-expire has an option to expire all versions of an
 // object which matches the given filters.
-func (ri *batchJobInfo) trackMultipleObjectVersions(bucket string, info ObjectInfo, success bool) {
+func (ri *batchJobInfo) trackMultipleObjectVersions(info ObjectInfo, success bool) {
 	if success {
 		ri.Objects += int64(info.NumVersions)
 	} else {
@@ -1695,6 +1720,8 @@ func (a adminAPIHandlers) DescribeBatchJob(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Remove sensitive fields.
+	req.RedactSensitive()
 	buf, err := yaml.Marshal(req)
 	if err != nil {
 		batchLogIf(ctx, err)
@@ -1802,7 +1829,7 @@ func (a adminAPIHandlers) CancelBatchJob(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if _, success := proxyRequestByToken(ctx, w, r, jobID); success {
+	if _, proxied, _ := proxyRequestByToken(ctx, w, r, jobID, true); proxied {
 		return
 	}
 
