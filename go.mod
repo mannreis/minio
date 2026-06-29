@@ -4,6 +4,8 @@ go 1.24.0
 
 toolchain go1.24.8
 
+replace github.com/minio/console => ./console/
+
 // Install tools using 'go install tool'.
 tool (
 	github.com/tinylib/msgp
