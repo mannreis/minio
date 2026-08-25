@@ -96,6 +96,7 @@ require (
 	github.com/zeebo/xxh3 v1.0.2
 	go.etcd.io/etcd/api/v3 v3.5.21
 	go.etcd.io/etcd/client/v3 v3.5.21
+	go.mongodb.org/mongo-driver/v2 v2.8.1
 	go.uber.org/atomic v1.11.0
 	go.uber.org/zap v1.27.0
 	goftp.io/server/v2 v2.0.1
@@ -251,7 +252,11 @@ require (
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/unrolled/secure v1.17.0 // indirect
 	github.com/vbauerster/mpb/v8 v8.9.3 // indirect
+	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
+	github.com/xdg-go/scram v1.2.0 // indirect
+	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/xdg/stringprep v1.0.3 // indirect
+	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.21 // indirect
