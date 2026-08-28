@@ -20,6 +20,9 @@ package event
 import (
 	"encoding/json"
 	"encoding/xml"
+	"errors"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // Name - event type enum.
@@ -277,6 +280,67 @@ func (name *Name) UnmarshalJSON(data []byte) error {
 
 	*name = eventName
 	return nil
+}
+
+// MarshalBSONValue - encodes Name as a BSON string for storage in MongoDB.
+func (name Name) MarshalBSONValue() (byte, []byte, error) {
+	t, data, err := bson.MarshalValue(name.String())
+	if err != nil {
+		return 0, nil, err
+	}
+	return byte(t), data, nil
+}
+
+// UnmarshalBSONValue - decodes a stored BSON value back into a Name.
+//
+// Accepts both string (the intended representation) but also int32/int64
+// for backward compatibility with documents written as JSON!? where Name
+// was stored as its raw int
+func (name *Name) UnmarshalBSONValue(t byte, data []byte) error {
+	rv := bson.RawValue{Type: bson.Type(t), Value: data}
+
+	switch bson.Type(t) {
+	case bson.TypeString:
+		var s string
+		if err := rv.Unmarshal(&s); err != nil {
+			return err
+		}
+		n, err := ParseName(s)
+		if err != nil {
+			return err
+		}
+		*name = n
+		return nil
+
+	case bson.TypeInt32:
+		var i int32
+		if err := rv.Unmarshal(&i); err != nil {
+			return err
+		}
+		*name = Name(i)
+		if name.String() == "" {
+			return errors.New("Unable to unmarshal event.Name: invalid int32")
+		}
+		return nil
+
+	case bson.TypeInt64:
+		var i int64
+		if err := rv.Unmarshal(&i); err != nil {
+			return err
+		}
+		*name = Name(i)
+		if name.String() == "" {
+			return errors.New("Unable to unmarshal event.Name: invalid int64")
+		}
+		return nil
+
+	case bson.TypeNull:
+		*name = 0
+		return nil
+
+	default:
+		return errors.New("Unable to unmarshal EventName")
+	}
 }
 
 // ParseName - parses string to Name.
