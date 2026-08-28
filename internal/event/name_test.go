@@ -22,6 +22,8 @@ import (
 	"encoding/xml"
 	"reflect"
 	"testing"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func TestNameExpand(t *testing.T) {
@@ -196,6 +198,93 @@ func TestNameUnmarshalJSON(t *testing.T) {
 	for i, testCase := range testCases {
 		var name Name
 		err := json.Unmarshal(testCase.data, &name)
+		expectErr := (err != nil)
+
+		if expectErr != testCase.expectErr {
+			t.Fatalf("test %v: error: expected: %v, got: %v", i+1, testCase.expectErr, expectErr)
+		}
+
+		if !testCase.expectErr {
+			if !reflect.DeepEqual(name, testCase.expectedName) {
+				t.Fatalf("test %v: data: expected: %v, got: %v", i+1, testCase.expectedName, name)
+			}
+		}
+	}
+}
+
+func TestNameMarshalUnMarshallBSON(t *testing.T) {
+	var blankName Name
+
+	testCases := []struct {
+		name         Name
+		expectedData string
+		expectErr    bool
+	}{
+		{ObjectAccessedAll, `s3:ObjectAccessed:*`, false},
+		{ObjectRemovedDelete, `s3:ObjectRemoved:Delete`, false},
+		{ObjectRemovedNoOP, `s3:ObjectRemoved:NoOP`, false},
+		{blankName, ``, false},
+	}
+
+	for i, testCase := range testCases {
+		dataType, data, err := bson.MarshalValue(testCase.name)
+		expectErr := (err != nil)
+
+		if expectErr != testCase.expectErr {
+			t.Fatalf("test %v: error: expected: %v, got: %v", i+1, testCase.expectErr, expectErr)
+		}
+
+		if !testCase.expectErr {
+			if dataType != bson.TypeString {
+				t.Fatalf("test %v: data: expected %v, got: %v", i+1, bson.TypeString.String(), dataType.String())
+			}
+
+			expType, expData, err := bson.MarshalValue(testCase.expectedData)
+			if err != nil {
+				t.Fatalf("test %v: error: unable to Marshal literal %v", i+1, testCase.expectedData)
+			}
+			if expType != dataType {
+				t.Fatalf("test %v: data: expected %v, got: %v", i+1, expType.String(), dataType.String())
+			}
+			if !reflect.DeepEqual(data, expData) {
+				t.Fatalf("test %v: data: expected: %v, got: %v", i+1, expData, data)
+			}
+
+			_, err = ParseName(testCase.expectedData)
+			expectErr = (err != nil)
+
+			// Revert Marshaling
+			var unmarshalName Name
+			err = bson.UnmarshalValue(dataType, data, &unmarshalName)
+			if expectErr != (err != nil) {
+				t.Fatalf("test: %v: error: expected %v, got: %v", i+1, expectErr, err)
+			}
+			if err == nil {
+				if unmarshalName != testCase.name {
+					t.Fatalf("test %v: Marshal + Unmarshal mismatch expected: %v, got: %v", i+1, testCase.name, unmarshalName)
+				}
+			}
+		}
+	}
+}
+
+func TestNameUnmarshalBSON(t *testing.T) {
+	var blankName Name
+
+	testCases := []struct {
+		data         string
+		expectedName Name
+		expectErr    bool
+	}{
+		{"\x14\x00\x00\x00s3:ObjectAccessed:*\x00", ObjectAccessedAll, false},
+		{"\x18\x00\x00\x00s3:ObjectRemoved:Delete\x00", ObjectRemovedDelete, false},
+		{"\x16\x00\x00\x00s3:ObjectRemoved:NoOP\x00", ObjectRemovedNoOP, false},
+		{"\x01\x00\x00\x00\x00", blankName, true},
+	}
+
+	for i, testCase := range testCases {
+		var name Name
+		err := bson.UnmarshalValue(bson.TypeString, []byte(testCase.data), &name)
 		expectErr := (err != nil)
 
 		if expectErr != testCase.expectErr {
