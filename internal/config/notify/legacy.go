@@ -592,6 +592,54 @@ func SetNotifyMySQL(s config.Config, sqlName string, cfg target.MySQLArgs) error
 	return nil
 }
 
+// SetNotifyMongoDB - helper for config migration from older config.
+func SetNotifyMongoDB(s config.Config, mongoName string, cfg target.MongoDBArgs) error {
+	if !cfg.Enable {
+		return nil
+	}
+
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+
+	s[config.NotifyMongoDBSubSys][mongoName] = config.KVS{
+		config.KV{
+			Key:   config.Enable,
+			Value: config.EnableOn,
+		},
+		config.KV{
+			Key:   target.MongoDBConnectionString,
+			Value: cfg.ConnectionString,
+		},
+		config.KV{
+			Key:   target.MongoDBDatabase,
+			Value: cfg.Database,
+		},
+		config.KV{
+			Key:   target.MongoDBCollection,
+			Value: cfg.Collection,
+		},
+		config.KV{
+			Key:   target.MongoDBQueueDir,
+			Value: cfg.QueueDir,
+		},
+		config.KV{
+			Key:   target.MongoDBQueueLimit,
+			Value: strconv.Itoa(int(cfg.QueueLimit)),
+		},
+		config.KV{
+			Key:   target.MongoDBBatchSize,
+			Value: strconv.Itoa(int(cfg.BatchSize)),
+		},
+		config.KV{
+			Key:   target.MongoDBBatchTimeout,
+			Value: strconv.Itoa(int(cfg.BatchTimeout)),
+		},
+	}
+
+	return nil
+}
+
 // SetNotifyMQTT - helper for config migration from older config.
 func SetNotifyMQTT(s config.Config, mqttName string, cfg target.MQTTArgs) error {
 	if !cfg.Enable {
