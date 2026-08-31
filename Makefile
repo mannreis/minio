@@ -219,6 +219,10 @@ test-resiliency: build
 	@echo "Running resiliency tests"
 	@(DOCKER_COMPOSE_FILE=$(PWD)/docs/resiliency/docker-compose.yaml env bash $(PWD)/docs/resiliency/resiliency-tests.sh)
 
+test-notifications: build
+	@echo "Running bucket notification tests"
+	@(DOCKER_COMPOSE_FILE=$(PWD)/docs/bucket/notifications/docker-compose.yaml env bash $(PWD)/docs/bucket/notifications/events-test.sh)
+
 install-race: checks build-debugging ## builds minio to $(PWD)
 	@echo "Building minio binary with -race to './minio'"
 	@GORACE=history_size=7 CGO_ENABLED=1 go build -tags kqueue,dev -race -trimpath --ldflags "$(LDFLAGS)" -o $(PWD)/minio 1>/dev/null
