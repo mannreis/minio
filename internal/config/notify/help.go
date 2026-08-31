@@ -23,9 +23,11 @@ import (
 )
 
 const (
-	formatComment     = `'namespace' reflects current bucket/object list and 'access' reflects a journal of object operations, defaults to 'namespace'`
-	queueDirComment   = `staging dir for undelivered messages e.g. '/home/events'`
-	queueLimitComment = `maximum limit for undelivered messages, defaults to '100000'`
+	formatComment       = `'namespace' reflects current bucket/object list and 'access' reflects a journal of object operations, defaults to 'namespace'`
+	queueDirComment     = `staging dir for undelivered messages e.g. '/home/events'`
+	queueLimitComment   = `maximum limit for undelivered messages, defaults to '100000'`
+	batchSizeComment    = `batch size of the events; used only when queue_dir is set`
+	batchTimeoutComment = `commit timeout set for the batch; used only when batch_size > 1",specify compression level of the Kafka cluster`
 )
 
 // Help template inputs for all notification targets
@@ -276,13 +278,13 @@ var (
 		},
 		config.HelpKV{
 			Key:         target.KafkaBatchSize,
-			Description: "batch size of the events; used only when queue_dir is set",
+			Description: batchSizeComment,
 			Optional:    true,
 			Type:        "number",
 		},
 		config.HelpKV{
 			Key:         target.KafkaBatchCommitTimeout,
-			Description: "commit timeout set for the batch; used only when batch_size > 1",
+			Description: batchTimeoutComment,
 			Optional:    true,
 			Type:        "duration",
 		},
@@ -440,6 +442,58 @@ var (
 		},
 	}
 
+	HelpMongoDB = config.HelpKVS{
+		config.HelpKV{
+			Key:         target.MongoDBConnectionString,
+			Description: "MongoDB connection string e.g. \"mongodb+srv://localhost\"",
+			Type:        "string",
+		},
+		config.HelpKV{
+			Key:         target.MongoDBDatabase,
+			Description: "Database name to store/update events, collection is auto-created",
+			Type:        "string",
+		},
+		config.HelpKV{
+			Key:         target.MongoDBCollection,
+			Description: "Collection name to store/update events, collection is auto-created",
+			Type:        "string",
+		},
+		// config.HelpKV{
+		// 	Key:         target.MongoDBFormat,
+		// 	Description: formatComment,
+		// 	Type:        "namespace*|access",
+		// },
+		config.HelpKV{
+			Key:         target.MongoDBQueueDir,
+			Description: queueDirComment,
+			Optional:    true,
+			Type:        "path",
+		},
+		config.HelpKV{
+			Key:         target.MongoDBQueueLimit,
+			Description: queueLimitComment,
+			Optional:    true,
+			Type:        "number",
+		},
+		config.HelpKV{
+			Key:         target.MongoDBBatchSize,
+			Description: batchSizeComment,
+			Optional:    true,
+			Type:        "path",
+		},
+		config.HelpKV{
+			Key:         target.MongoDBBatchTimeout,
+			Description: batchTimeoutComment,
+			Optional:    true,
+			Type:        "number",
+		},
+		config.HelpKV{
+			Key:         config.Comment,
+			Description: config.DefaultComment,
+			Optional:    true,
+			Type:        "sentence",
+		},
+	}
 	HelpNATS = config.HelpKVS{
 		config.HelpKV{
 			Key:         target.NATSAddress,

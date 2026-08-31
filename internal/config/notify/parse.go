@@ -175,6 +175,21 @@ func fetchSubSysTargets(ctx context.Context, cfg config.Config, subSys string, t
 			}
 			targets = append(targets, t)
 		}
+	case config.NotifyMongoDBSubSys:
+		mongodbTargets, err := GetNotifyMongoDB(cfg[config.NotifyMongoDBSubSys], transport)
+		if err != nil {
+			return nil, err
+		}
+		for id, args := range mongodbTargets {
+			if !args.Enable {
+				continue
+			}
+			t, err := target.NewMongoDBTarget(ctx, id, args, logOnceIf, transport)
+			if err != nil {
+				return nil, err
+			}
+			targets = append(targets, t)
+		}
 	case config.NotifyNATSSubSys:
 		natsTargets, err := GetNotifyNATS(cfg[config.NotifyNATSSubSys], transport.TLSClientConfig.RootCAs)
 		if err != nil {
@@ -278,6 +293,7 @@ var (
 		config.NotifyKafkaSubSys:    DefaultKafkaKVS,
 		config.NotifyMQTTSubSys:     DefaultMQTTKVS,
 		config.NotifyMySQLSubSys:    DefaultMySQLKVS,
+		config.NotifyMongoDBSubSys:  DefaultMongoDBKVS,
 		config.NotifyNATSSubSys:     DefaultNATSKVS,
 		config.NotifyNSQSubSys:      DefaultNSQKVS,
 		config.NotifyPostgresSubSys: DefaultPostgresKVS,
@@ -1402,6 +1418,124 @@ func GetNotifyRedis(redisKVS map[string]config.KVS) (map[string]target.RedisArgs
 		redisTargets[k] = redisArgs
 	}
 	return redisTargets, nil
+}
+
+// DefaultMongoDBKVS - default KV for mongodb config
+var (
+	DefaultMongoDBKVS = config.KVS{
+		config.KV{
+			Key:   config.Enable,
+			Value: config.EnableOff,
+		},
+		config.KV{
+			Key:   target.MongoDBConnectionString,
+			Value: "",
+		},
+		config.KV{
+			Key:   target.MongoDBDatabase,
+			Value: "minio",
+		},
+		config.KV{
+			Key:   target.MongoDBCollection,
+			Value: "raw_events",
+		},
+		config.KV{
+			Key:   target.MongoDBAuthToken,
+			Value: "",
+		},
+		config.KV{
+			Key:   target.MongoDBQueueLimit,
+			Value: "0",
+		},
+		config.KV{
+			Key:   target.MongoDBQueueDir,
+			Value: "",
+		},
+		config.KV{
+			Key:   target.MongoDBBatchSize,
+			Value: "0",
+		},
+		config.KV{
+			Key:   target.MongoDBBatchTimeout,
+			Value: "0s",
+		},
+		config.KV{
+			Key:   target.MongoDBClientCert,
+			Value: "",
+		},
+		config.KV{
+			Key:   target.MongoDBClientKey,
+			Value: "",
+		},
+	}
+)
+
+// GetNotifyMongoDB - returns a map of registered notification 'mongodb' targets
+func GetNotifyMongoDB(mongodbKVS map[string]config.KVS, transport *http.Transport) (
+	map[string]target.MongoDBArgs, error,
+) {
+	mongodbTargets := make(map[string]target.MongoDBArgs)
+	for k, kv := range config.Merge(mongodbKVS, target.EnvMongoDBEnable, DefaultMongoDBKVS) {
+		enableEnv := target.EnvMongoDBEnable
+		if k != config.Default {
+			enableEnv = enableEnv + config.Default + k
+		}
+		enabled, err := config.ParseBool(env.Get(enableEnv, kv.Get(config.Enable)))
+		if err != nil {
+			return nil, err
+		}
+		if !enabled {
+			continue
+		}
+		connstrEnv := target.EnvMongoDBConnectionString
+		databaseEnv := target.EnvMongoDBDatabase
+		collectionEnv := target.EnvMongoDBCollection
+		queueLimitEnv := target.EnvMongoDBQueueLimit
+		queueDirEnv := target.EnvMongoDBQueueDir
+		batchSizeEnv := target.EnvMongoDBBatchSize
+		batchTimeoutEnv := target.EnvMongoDBBatchTimeout
+
+		if k != config.Default {
+			connstrEnv = connstrEnv + config.Default + k
+			databaseEnv = databaseEnv + config.Default + k
+			collectionEnv = collectionEnv + config.Default + k
+			queueLimitEnv = queueLimitEnv + config.Default + k
+			queueDirEnv = queueDirEnv + config.Default + k
+			batchSizeEnv = batchSizeEnv + config.Default + k
+			batchTimeoutEnv = batchTimeoutEnv + config.Default + k
+		}
+
+		queueLimit, err := strconv.Atoi(env.Get(queueLimitEnv, kv.Get(target.MongoDBQueueLimit)))
+		if err != nil {
+			return nil, err
+		}
+
+		batchSize, err := strconv.Atoi(env.Get(batchSizeEnv, kv.Get(target.MongoDBBatchSize)))
+		if err != nil {
+			return nil, err
+		}
+
+		batchTimeout, err := time.ParseDuration(env.Get(batchTimeoutEnv, kv.Get(target.MongoDBBatchTimeout)))
+		if err != nil {
+			return nil, err
+		}
+		mongodbArgs := target.MongoDBArgs{
+			Enable:           enabled,
+			ConnectionString: env.Get(connstrEnv, kv.Get(target.MongoDBConnectionString)),
+			Database:         env.Get(databaseEnv, kv.Get(target.MongoDBDatabase)),
+			Collection:       env.Get(collectionEnv, kv.Get(target.MongoDBCollection)),
+			Transport:        transport,
+			QueueDir:         env.Get(queueDirEnv, kv.Get(target.MongoDBQueueDir)),
+			QueueLimit:       uint64(queueLimit),
+			BatchSize:        uint64(batchSize),
+			BatchTimeout:     batchTimeout,
+		}
+		if err = mongodbArgs.Validate(); err != nil {
+			return nil, err
+		}
+		mongodbTargets[k] = mongodbArgs
+	}
+	return mongodbTargets, nil
 }
 
 // DefaultWebhookKVS - default KV for webhook config
