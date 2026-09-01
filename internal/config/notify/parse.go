@@ -1433,11 +1433,15 @@ var (
 		},
 		config.KV{
 			Key:   target.MongoDBDatabase,
-			Value: "minio",
+			Value: target.DefaultDatabaseName,
 		},
 		config.KV{
 			Key:   target.MongoDBCollection,
-			Value: "raw_events",
+			Value: target.DefaultCollectionName,
+		},
+		config.KV{
+			Key:   target.MongoDBFormat,
+			Value: target.DefaultFormatName,
 		},
 		config.KV{
 			Key:   target.MongoDBAuthToken,
@@ -1490,6 +1494,7 @@ func GetNotifyMongoDB(mongodbKVS map[string]config.KVS, transport *http.Transpor
 		connstrEnv := target.EnvMongoDBConnectionString
 		databaseEnv := target.EnvMongoDBDatabase
 		collectionEnv := target.EnvMongoDBCollection
+		formatEnv := target.EnvMongoDBFormat
 		queueLimitEnv := target.EnvMongoDBQueueLimit
 		queueDirEnv := target.EnvMongoDBQueueDir
 		batchSizeEnv := target.EnvMongoDBBatchSize
@@ -1499,6 +1504,7 @@ func GetNotifyMongoDB(mongodbKVS map[string]config.KVS, transport *http.Transpor
 			connstrEnv = connstrEnv + config.Default + k
 			databaseEnv = databaseEnv + config.Default + k
 			collectionEnv = collectionEnv + config.Default + k
+			formatEnv = formatEnv + config.Default + k
 			queueLimitEnv = queueLimitEnv + config.Default + k
 			queueDirEnv = queueDirEnv + config.Default + k
 			batchSizeEnv = batchSizeEnv + config.Default + k
@@ -1519,11 +1525,13 @@ func GetNotifyMongoDB(mongodbKVS map[string]config.KVS, transport *http.Transpor
 		if err != nil {
 			return nil, err
 		}
+
 		mongodbArgs := target.MongoDBArgs{
 			Enable:           enabled,
 			ConnectionString: env.Get(connstrEnv, kv.Get(target.MongoDBConnectionString)),
 			Database:         env.Get(databaseEnv, kv.Get(target.MongoDBDatabase)),
 			Collection:       env.Get(collectionEnv, kv.Get(target.MongoDBCollection)),
+			Format:           env.Get(formatEnv, kv.Get(target.MongoDBFormat)),
 			Transport:        transport,
 			QueueDir:         env.Get(queueDirEnv, kv.Get(target.MongoDBQueueDir)),
 			QueueLimit:       uint64(queueLimit),

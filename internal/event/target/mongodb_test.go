@@ -12,29 +12,11 @@ type fields struct {
 	ConnString string
 	Database   string
 	Collection string
+	Format     string
 }
 
 func (f *fields) ToArgs() MongoDBArgs {
-	return MongoDBArgs{Enable: f.Enable, ConnectionString: f.ConnString, Database: f.Database, Collection: f.Collection}
-}
-
-func strPtr(s string) *string {
-	return &s
-}
-
-// Mock Mongo DB
-// type MockClient struct {
-// 	connectionString string
-// }
-
-type MockCollection struct {
-	// name string
-}
-
-// Original signature
-// func (coll *mongo.Collection) InsertOne(ctx context.Context, document any, opts ...options.Lister[options.InsertOneOptions]) (*mongo.InsertOneResult, error)
-func (mcol *MockCollection) InsertOne(ctx context.Context, document any, opts ...any) (any, error) {
-	return strPtr("527f191e810c19729de068ea"), nil
+	return MongoDBArgs{Enable: f.Enable, ConnectionString: f.ConnString, Database: f.Database, Collection: f.Collection, Format: f.Format}
 }
 
 func logOnceIf(ctx context.Context, err error, id string, errKind ...any) {
@@ -80,7 +62,7 @@ func TestMongoDBArgs(t *testing.T) {
 			fields: fields{
 				Enable:     true,
 				ConnString: "mongodb://mocked:4321",
-				Database:   "minio",
+				Database:   "minio", // Collection required
 			},
 			wantErr: true,
 		},
@@ -90,8 +72,31 @@ func TestMongoDBArgs(t *testing.T) {
 				Enable:     true,
 				Database:   "events",
 				Collection: "events", // Cannot be same as database
+				Format:     "raw",
 			},
 			wantErr: true,
+		},
+		{
+			name: "bad_format",
+			fields: fields{
+				Enable:     true,
+				ConnString: "mongodb://test:214",
+				Database:   "minio-mongo",
+				Collection: "raw_format",
+				Format:     "unknown",
+			},
+			wantErr: true,
+		},
+		{
+			name: "ok_raw",
+			fields: fields{
+				Enable:     true,
+				ConnString: "mongodb://test:214",
+				Database:   "minio-mongo",
+				Collection: "raw_format",
+				Format:     "raw",
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {

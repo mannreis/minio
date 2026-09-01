@@ -620,6 +620,10 @@ func SetNotifyMongoDB(s config.Config, mongoName string, cfg target.MongoDBArgs)
 			Value: cfg.Collection,
 		},
 		config.KV{
+			Key:   target.MongoDBFormat,
+			Value: cfg.Format,
+		},
+		config.KV{
 			Key:   target.MongoDBQueueDir,
 			Value: cfg.QueueDir,
 		},

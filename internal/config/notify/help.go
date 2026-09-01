@@ -450,19 +450,22 @@ var (
 		},
 		config.HelpKV{
 			Key:         target.MongoDBDatabase,
-			Description: "Database name to store/update events, collection is auto-created",
+			Description: `Database name to write collections, database is auto-created and defaults to 'minio'`,
 			Type:        "string",
+			Optional:    true,
 		},
 		config.HelpKV{
 			Key:         target.MongoDBCollection,
-			Description: "Collection name to store/update events, collection is auto-created",
+			Description: `Collection name to store/update events, collection is auto-created and defaults to '{format}_events'`,
 			Type:        "string",
+			Optional:    true,
 		},
-		// config.HelpKV{
-		// 	Key:         target.MongoDBFormat,
-		// 	Description: formatComment,
-		// 	Type:        "namespace*|access",
-		// },
+		config.HelpKV{
+			Key:         target.MongoDBFormat,
+			Description: `document layout type - 'raw' writes events as a document (default) - 'namespace' updates the event document of a given object - 'access' adds events as a timeseries`,
+			Type:        "raw*|namespace|access",
+			Optional:    true,
+		},
 		config.HelpKV{
 			Key:         target.MongoDBQueueDir,
 			Description: queueDirComment,
