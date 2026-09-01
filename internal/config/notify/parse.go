@@ -1433,15 +1433,15 @@ var (
 		},
 		config.KV{
 			Key:   target.MongoDBDatabase,
-			Value: target.DefaultDatabaseName,
+			Value: "",
 		},
 		config.KV{
 			Key:   target.MongoDBCollection,
-			Value: target.DefaultCollectionName,
+			Value: "",
 		},
 		config.KV{
 			Key:   target.MongoDBFormat,
-			Value: target.DefaultFormatName,
+			Value: "",
 		},
 		config.KV{
 			Key:   target.MongoDBAuthToken,
@@ -1535,7 +1535,7 @@ func GetNotifyMongoDB(mongodbKVS map[string]config.KVS, transport *http.Transpor
 			Transport:        transport,
 			QueueDir:         env.Get(queueDirEnv, kv.Get(target.MongoDBQueueDir)),
 			QueueLimit:       uint64(queueLimit),
-			BatchSize:        uint64(batchSize),
+			BatchSize:        uint32(batchSize),
 			BatchTimeout:     batchTimeout,
 		}
 		if err = mongodbArgs.Validate(); err != nil {

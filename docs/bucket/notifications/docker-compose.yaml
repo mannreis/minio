@@ -65,9 +65,11 @@ services:
           - cluster2.local
 
   mongo:
-    image: mongo:latest
+    image: mongo:7 #latest - Incompatibile with newer kernels >= 6.19
+    container_name: mongo1
+    hostname: mongo1.local
     ports:
-      - "27017:27017"
+      - "11017:27017"
     networks:
       event-notification:
         ipv4_address: 172.28.0.13

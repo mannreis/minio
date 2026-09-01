@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/minio/minio/internal/event"
 	"github.com/minio/minio/internal/logger"
 )
 
@@ -28,7 +29,7 @@ func TestMongoDBTarget(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewMongoDBTarget should not fail with empty MongoDBArgs")
 	}
-	if mongoTarget.mongoClient != nil {
+	if mongoTarget.mongo.client != nil {
 		t.Fatalf("MongoDB target creation should not estabilsh a connection!")
 	}
 }
@@ -105,6 +106,96 @@ func TestMongoDBArgs(t *testing.T) {
 			if err := n.Validate(); (err != nil) != tt.wantErr {
 				t.Errorf("MongoDBArgs.Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
+		})
+	}
+}
+
+func TestMongoFormatDocument(t *testing.T) {
+	dummyEvent := event.Event{
+		EventVersion:      "2.0",
+		EventSource:       "minio:s3",
+		AwsRegion:         "region",
+		EventTime:         event.AMZTimeFormat,
+		EventName:         event.ObjectCreatedCompleteMultipartUpload,
+		UserIdentity:      event.Identity{PrincipalID: "principalId"},
+		RequestParameters: map[string]string{"head1": "val"}, // Element order on bson vs json might differ
+		ResponseElements:  map[string]string{"resp1": "val"}, // Element order on bson vs json might differ
+		S3: event.Metadata{
+			SchemaVersion:   "1.0",
+			ConfigurationID: "Config",
+			Bucket: event.Bucket{
+				Name:          "bucketname",
+				OwnerIdentity: event.Identity{PrincipalID: "principalId"},
+				ARN:           "arn:::bucketname",
+			},
+			Object: event.Object{
+				Key:       "key",
+				VersionID: "versionid",
+				Sequencer: "sequencer",
+			},
+		},
+		Source: event.Source{
+			Host:      "useragent",
+			UserAgent: "host",
+		},
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "ok_raw",
+			fields: fields{
+				Enable:     true,
+				ConnString: "mongodb://test:214",
+				Database:   "minio-mongo",
+				Collection: "raw_format",
+				Format:     "raw",
+			},
+			wantErr: false,
+		},
+		{
+			name: "ok_namespace",
+			fields: fields{
+				Enable:     true,
+				ConnString: "mongodb://test:214",
+				Database:   "minio-mongo",
+				Collection: "namespace_format",
+				Format:     "namespace",
+			},
+			wantErr: false,
+		},
+		{
+			name: "ok_access",
+			fields: fields{
+				Enable:     true,
+				ConnString: "mongodb://test:214",
+				Database:   "minio-mongo",
+				Collection: "access_format",
+				Format:     "access",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			args := tt.fields.ToArgs()
+			if err := args.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("MongoDBArgs.Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			target, err := NewMongoDBTarget(t.Context(), "test_format_raw", args, logOnceIf, nil)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewMongoDBTarget() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			doc, err := target.toFormatDocument(dummyEvent)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MongoDBTarget.toFormatDocument() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if doc == nil {
+				t.Errorf("document should not be nil")
+			}
+			t.Logf("%v\n", doc)
 		})
 	}
 }
