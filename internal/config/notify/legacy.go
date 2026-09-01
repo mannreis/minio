@@ -611,18 +611,18 @@ func SetNotifyMongoDB(s config.Config, mongoName string, cfg target.MongoDBArgs)
 			Key:   target.MongoDBConnectionString,
 			Value: cfg.ConnectionString,
 		},
-		config.KV{
-			Key:   target.MongoDBDatabase,
-			Value: cfg.Database,
-		},
-		config.KV{
-			Key:   target.MongoDBCollection,
-			Value: cfg.Collection,
-		},
-		config.KV{
-			Key:   target.MongoDBFormat,
-			Value: cfg.Format,
-		},
+		// config.KV{
+		// 	Key:   target.MongoDBDatabase,
+		// 	Value: cfg.Database,
+		// },
+		// config.KV{
+		// 	Key:   target.MongoDBCollection,
+		// 	Value: cfg.Collection,
+		// },
+		// config.KV{
+		// 	Key:   target.MongoDBFormat,
+		// 	Value: cfg.Format,
+		// },
 		config.KV{
 			Key:   target.MongoDBQueueDir,
 			Value: cfg.QueueDir,

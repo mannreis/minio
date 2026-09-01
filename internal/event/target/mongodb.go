@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -66,7 +67,7 @@ type MongoDBArgs struct {
 	AuthToken        string          `json:"authToken"`
 	QueueDir         string          `json:"queueDir"`
 	QueueLimit       uint64          `json:"queueLimit"`
-	BatchSize        uint64          `json:"batchSize"`
+	BatchSize        uint32          `json:"batchSize"`
 	BatchTimeout     time.Duration   `json:"batchTimeout"`
 	ClientCert       string          `json:"clientCert"`
 	ClientKey        string          `json:"clientKey"`
@@ -143,14 +144,18 @@ func (m MongoDBArgs) Validate() error {
 type MongoDBTarget struct {
 	initOnce once.Init
 
-	id          event.TargetID
-	args        MongoDBArgs
-	mongoClient *mongo.Client
-	store       store.Store[event.Event]
-	batch       *store.Batch[event.Event]
-	loggerOnce  logger.LogOnce
-	cancel      context.CancelFunc
-	cancelCh    <-chan struct{}
+	id    event.TargetID
+	args  MongoDBArgs
+	mongo struct {
+		client     *mongo.Client
+		collection *mongo.Collection
+		writer     collectionWriter
+	}
+	store      store.Store[event.Event]
+	batch      *store.Batch[event.Event]
+	loggerOnce logger.LogOnce
+	cancel     context.CancelFunc
+	cancelCh   <-chan struct{}
 }
 
 // ID - returns target ID.
@@ -177,7 +182,7 @@ func (target *MongoDBTarget) Store() event.TargetStore {
 }
 
 func (target *MongoDBTarget) isActive() (bool, error) {
-	if err := target.mongoClient.Ping(context.TODO(), nil); err != nil {
+	if err := target.mongo.client.Ping(context.TODO(), nil); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -205,16 +210,42 @@ func (target *MongoDBTarget) Save(eventData event.Event) error {
 	return err
 }
 
+func (target *MongoDBTarget) toFormatDocument(eventData event.Event) (any, error) {
+	switch target.args.Format {
+	case event.RawFormat:
+		return eventData, nil
+	case event.NamespaceFormat:
+		{
+			objectName, err := url.QueryUnescape(eventData.S3.Object.Key)
+			if err != nil {
+				return nil, err
+			}
+			key := eventData.S3.Bucket.Name + "/" + objectName
+			return event.Log{EventName: eventData.EventName, Key: key, Records: []event.Event{eventData}}, nil
+		}
+	case event.AccessFormat:
+		{
+			eventTime, err := time.Parse(event.AMZTimeFormat, eventData.EventTime)
+			if err != nil {
+				return nil, err
+			}
+			return struct {
+				EventTime time.Time
+				Records   []event.Event
+			}{eventTime, []event.Event{eventData}}, nil
+		}
+	default:
+		return nil, fmt.Errorf("Unsupported event format: %s", target.args.Format)
+	}
+}
+
 // sends a single event to the mongodb.
-func (target *MongoDBTarget) send(eventData []event.Event) error {
-	if len(eventData) == 0 {
+func (target *MongoDBTarget) send(events []event.Event) error {
+	if len(events) == 0 {
 		return nil
 	}
 
-	collection := target.mongoClient.Database(target.args.Database).Collection(target.args.Collection)
-
-	_, err := collection.InsertMany(context.TODO(), eventData)
-	if err != nil {
+	if _, err := target.mongo.writer.WriteDocuments(events); err != nil {
 		target.loggerOnce(context.Background(), err, target.ID().String())
 		return err
 	}
@@ -262,8 +293,8 @@ func (target *MongoDBTarget) SendFromStore(key store.Key) (err error) {
 
 // Close - does nothing and available for interface compatibility.
 func (target *MongoDBTarget) Close() error {
-	if target.mongoClient != nil {
-		target.mongoClient.Disconnect(context.TODO())
+	if target.mongo.client != nil {
+		target.mongo.client.Disconnect(context.TODO())
 	}
 	target.cancel()
 	return nil
@@ -272,6 +303,7 @@ func (target *MongoDBTarget) Close() error {
 func (target *MongoDBTarget) init() error {
 	return target.initOnce.Do(target.initMongoDB)
 }
+
 
 // Only called from init()
 func (target *MongoDBTarget) initMongoDB() error {
@@ -301,8 +333,8 @@ func (target *MongoDBTarget) initMongoDB() error {
 		return err
 	}
 
-	target.mongoClient = mdb
-
+	// Initialize client
+	target.mongo.client = mdb
 	yes, err := target.isActive()
 	if err != nil {
 		target.loggerOnce(context.Background(), err, target.ID().String())
@@ -311,6 +343,23 @@ func (target *MongoDBTarget) initMongoDB() error {
 	if !yes {
 		target.loggerOnce(context.Background(), err, target.ID().String())
 		return store.ErrNotConnected
+	}
+
+	// Select writer type
+	switch target.args.Format {
+	case event.RawFormat:
+		target.mongo.writer = newRawCollectionWriter(target.mongo.client, target.args.Database, target.args.Collection)
+	case event.AccessFormat:
+		target.mongo.writer = newAccessCollectionWriter(target.mongo.client, target.args.Database, target.args.Collection)
+	case event.NamespaceFormat:
+		target.mongo.writer = newNamespaceCollectionWriter(target.mongo.client, target.args.Database, target.args.Collection)
+	default:
+		return fmt.Errorf("Unable to setup collection for unknown format %#v", target.args.Format)
+	}
+
+	if err := target.mongo.writer.EnsureIndexes(); err != nil {
+		target.loggerOnce(context.Background(), err, target.ID().String())
+		return err
 	}
 
 	return nil
@@ -327,6 +376,17 @@ func NewMongoDBTarget(ctx context.Context, id string, args MongoDBArgs, loggerOn
 		}
 	}
 
+	// adjust defaults if not present in args
+	if args.Database == "" {
+		args.Database = DefaultDatabaseName
+	}
+	if args.Collection == "" {
+		args.Collection = DefaultCollectionName
+	}
+	if args.Format == "" {
+		args.Format = DefaultFormatName
+	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	target := &MongoDBTarget{
 		id:   event.TargetID{ID: id, Name: "mongodb"},
@@ -340,10 +400,10 @@ func NewMongoDBTarget(ctx context.Context, id string, args MongoDBArgs, loggerOn
 
 	if target.store != nil {
 		target.batch = store.NewBatch[event.Event](store.BatchConfig[event.Event]{
-			Limit:         2,
+			Limit:         args.BatchSize,
 			Log:           loggerOnce,
 			Store:         queueStore,
-			CommitTimeout: 0, // default timeout
+			CommitTimeout: args.BatchTimeout,
 		})
 		store.StreamItems(target.store, target, target.cancelCh, target.loggerOnce)
 	}
