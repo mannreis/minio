@@ -19,7 +19,12 @@ import (
 )
 
 const (
-	defaultCollectionName = "raw_events"
+	// DefaultFormatName - default document layout format
+	DefaultFormatName = event.RawFormat
+	// DefaultCollectionName - default collection name
+	DefaultCollectionName = DefaultFormatName + "_events"
+	// DefaultDatabaseName - default databse name
+	DefaultDatabaseName = "minio"
 )
 
 // MongoDB constants
@@ -27,6 +32,7 @@ const (
 	MongoDBConnectionString = "connection_string"
 	MongoDBDatabase         = "database"
 	MongoDBCollection       = "collection"
+	MongoDBFormat           = "format"
 	MongoDBAuthToken        = "auth_token"
 	MongoDBQueueDir         = "queue_dir"
 	MongoDBQueueLimit       = "queue_limit"
@@ -39,6 +45,7 @@ const (
 	EnvMongoDBConnectionString = "MINIO_NOTIFY_MONGODB_CONNECTION_STRING"
 	EnvMongoDBDatabase         = "MINIO_NOTIFY_MONGODB_DATABASE"
 	EnvMongoDBCollection       = "MINIO_NOTIFY_MONGODB_COLLECTION"
+	EnvMongoDBFormat           = "MINIO_NOTIFY_MONGODB_FORMAT"
 	EnvMongoDBAuthToken        = "MINIO_NOTIFY_MONGODB_AUTH_TOKEN"
 	EnvMongoDBQueueDir         = "MINIO_NOTIFY_MONGODB_QUEUE_DIR"
 	EnvMongoDBQueueLimit       = "MINIO_NOTIFY_MONGODB_QUEUE_LIMIT"
@@ -53,7 +60,8 @@ type MongoDBArgs struct {
 	Enable           bool            `json:"enable"`
 	ConnectionString string          `json:"connectionString"` // required
 	Database         string          `json:"database"`         // required
-	Collection       string          `json:"collection"`       // default: "raw_events"
+	Collection       string          `json:"collection"`       // default: "{Format}_events"
+	Format           string          `json:"format"`           // default: "raw"
 	Transport        *http.Transport `json:"-"`
 	AuthToken        string          `json:"authToken"`
 	QueueDir         string          `json:"queueDir"`
@@ -103,7 +111,11 @@ func (m MongoDBArgs) Validate() error {
 	}
 
 	if m.Collection == "" {
-		return errors.New("Collection name cannot be empty")
+		return errors.New("collection name cannot be empty")
+	}
+
+	if m.Format != event.RawFormat && m.Format != event.NamespaceFormat && m.Format != event.AccessFormat {
+		return fmt.Errorf("format can only be: %s, %s or %s (got %v)", event.RawFormat, event.AccessFormat, event.NamespaceFormat, m.Format)
 	}
 
 	if m.QueueDir != "" {
@@ -264,8 +276,17 @@ func (target *MongoDBTarget) init() error {
 // Only called from init()
 func (target *MongoDBTarget) initMongoDB() error {
 	args := target.args
+
+	if args.Format == "" {
+		args.Format = DefaultFormatName
+	}
+
 	if args.Collection == "" {
-		args.Collection = defaultCollectionName
+		args.Collection = args.Format + "_events"
+	}
+
+	if args.Database == "" {
+		args.Database = options.DefaultName
 	}
 
 	opts, err := args.toClientOptions()
