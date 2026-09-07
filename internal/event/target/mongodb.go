@@ -304,7 +304,6 @@ func (target *MongoDBTarget) init() error {
 	return target.initOnce.Do(target.initMongoDB)
 }
 
-
 // Only called from init()
 func (target *MongoDBTarget) initMongoDB() error {
 	args := target.args

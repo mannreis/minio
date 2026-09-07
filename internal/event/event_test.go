@@ -3,11 +3,50 @@ package event
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"os/exec"
 	"reflect"
 	"testing"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
+
+func diffSideBySide(a, b []byte) (string, error) {
+	cmd := exec.Command("diff", "-y", "/dev/fd/3", "/dev/fd/4")
+
+	r1, w1, err := os.Pipe()
+	if err != nil {
+		return "", err
+	}
+	defer r1.Close()
+
+	r2, w2, err := os.Pipe()
+	if err != nil {
+		return "", err
+	}
+	defer r2.Close()
+
+	cmd.ExtraFiles = []*os.File{r1, r2}
+
+	go func() {
+		_, _ = w1.Write(a)
+		_ = w1.Close()
+	}()
+
+	go func() {
+		_, _ = w2.Write(b)
+		_ = w2.Close()
+	}()
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		if _, ok := err.(*exec.ExitError); !ok {
+			return "", err
+		}
+	}
+
+	return string(out), nil
+}
 
 func jsonIndent(b []byte) []byte {
 	var buf bytes.Buffer
@@ -90,7 +129,11 @@ func TestEventBSONtoJSONMarshal(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(jsonInd, bsonInd) {
-			t.Fatalf("test %v: bytes: mismatch: %v vs %v", i+1, string(jsonInd), string(bsonInd))
+			diff, err := diffSideBySide(jsonInd, bsonInd)
+			if err != nil {
+				t.Logf("Failed to run diff %s\n", err)
+			}
+			t.Fatalf("test %v: bytes: mismatch: %v vs %v: \n\t%s", i+1, string(jsonInd), string(bsonInd), diff)
 		}
 	}
 }
