@@ -23,7 +23,7 @@ help: ## print this help
 
 getdeps: ## fetch necessary dependencies
 	@mkdir -p ${GOPATH}/bin
-	@echo "Installing golangci-lint" && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOLANGCI_DIR)
+	@echo "Installing golangci-lint" && curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(GOLANGCI_DIR)
 
 crosscompile: ## cross compile minio
 	@(env bash $(PWD)/buildscripts/cross-compile.sh)
@@ -218,6 +218,10 @@ docker: build ## builds minio docker container
 test-resiliency: build
 	@echo "Running resiliency tests"
 	@(DOCKER_COMPOSE_FILE=$(PWD)/docs/resiliency/docker-compose.yaml env bash $(PWD)/docs/resiliency/resiliency-tests.sh)
+
+test-notifications: build
+	@echo "Running bucket notification tests"
+	@(DOCKER_COMPOSE_FILE=$(PWD)/docs/bucket/notifications/docker-compose.yaml env bash $(PWD)/docs/bucket/notifications/events-test.sh)
 
 install-race: checks build-debugging ## builds minio to $(PWD)
 	@echo "Building minio binary with -race to './minio'"
