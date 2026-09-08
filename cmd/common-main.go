@@ -43,10 +43,6 @@ import (
 	"github.com/inconshreveable/mousetrap"
 	dns2 "github.com/miekg/dns"
 	"github.com/minio/cli"
-	consoleapi "github.com/minio/console/api"
-	"github.com/minio/console/api/operations"
-	consoleoauth2 "github.com/minio/console/pkg/auth/idp/oauth2"
-	consoleCerts "github.com/minio/console/pkg/certs"
 	"github.com/minio/kms-go/kes"
 	"github.com/minio/madmin-go/v3"
 	"github.com/minio/minio-go/v7"
@@ -60,6 +56,10 @@ import (
 	"github.com/minio/pkg/v3/console"
 	"github.com/minio/pkg/v3/env"
 	xnet "github.com/minio/pkg/v3/net"
+	consoleapi "github.com/tools4s3/console/api"
+	"github.com/tools4s3/console/api/operations"
+	consoleoauth2 "github.com/tools4s3/console/pkg/auth/idp/oauth2"
+	consoleCerts "github.com/tools4s3/console/pkg/certs"
 	"golang.org/x/term"
 )
 
