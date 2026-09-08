@@ -451,8 +451,6 @@ github.com/minio/cli v1.24.2 h1:J+fCUh9mhPLjN3Lj/YhklXvxj8mnyE/D6FpFduXJ2jg=
 github.com/minio/cli v1.24.2/go.mod h1:bYxnK0uS629N3Bq+AOZZ+6lwF77Sodk4+UL9vNuXhOY=
 github.com/minio/colorjson v1.0.8 h1:AS6gEQ1dTRYHmC4xuoodPDRILHP/9Wz5wYUGDQfPLpg=
 github.com/minio/colorjson v1.0.8/go.mod h1:wrs39G/4kqNlGjwqHvPlAnXuc2tlPszo6JKdSBCLN8w=
-github.com/minio/console v1.7.7-0.20250905210349-2017f33b26e1 h1:jOW1ggtITn8sreTzUjcdYE/ZffxeVmWstXNlBLOE6j4=
-github.com/minio/console v1.7.7-0.20250905210349-2017f33b26e1/go.mod h1:hKNkzdKBKU84w5wXqMnkH74QocJGHW2zjvFtuGETDsc=
 github.com/minio/crc64nvme v1.0.1 h1:DHQPrYPdqK7jQG/Ls5CTBZWeex/2FMS3G5XGkycuFrY=
 github.com/minio/crc64nvme v1.0.1/go.mod h1:eVfm2fAzLlxMdUGc0EEBGSMmPwmXD5XiNRpnu9J3bvg=
 github.com/minio/csvparser v1.0.0 h1:xJEHcYK8ZAjeW4hNV9Zu30u+/2o4UyPnYgyjWp8b7ZU=
@@ -693,6 +691,8 @@ github.com/tklauser/go-sysconf v0.4.0 h1:7H0uAN+7RkwWRaxhYXDLqa5V3LPrJeV8wmD9dRU
 github.com/tklauser/go-sysconf v0.4.0/go.mod h1:8mTNWyog7H+MpKijp4VmKJAd2bbYQ2zuUwkYRbUArPI=
 github.com/tklauser/numcpus v0.12.0 h1:NR85qdvHA9pFse3x3weVZ0r0ST8R6l5RHbZrlRaqob4=
 github.com/tklauser/numcpus v0.12.0/go.mod h1:ABHeXzJnr/qqwguhClkZKT1/8VABcYrsyUiUGobwWJg=
+github.com/tools4s3/console v1.7.7-0.20250905210349-2017f33b26e1-patched h1:MmgTegQLmdFSAgQY8Qv8dSVwW83/nNw1qyxnEV0UcOg=
+github.com/tools4s3/console v1.7.7-0.20250905210349-2017f33b26e1-patched/go.mod h1:BWPlHCVF6QUBivtBTifqZNedXj7sslgKQn/TF2wBU8A=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
 github.com/unrolled/secure v1.17.0 h1:Io7ifFgo99Bnh0J7+Q+qcMzWM6kaDPCA5FroFZEdbWU=
