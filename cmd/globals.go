@@ -25,7 +25,6 @@ import (
 	"sync"
 	"time"
 
-	consoleapi "github.com/tools4s3/console/api"
 	"github.com/minio/dnscache"
 	"github.com/minio/madmin-go/v3"
 	"github.com/minio/minio-go/v7"
@@ -37,6 +36,7 @@ import (
 	"github.com/minio/minio/internal/grid"
 	"github.com/minio/minio/internal/handlers"
 	"github.com/minio/minio/internal/kms"
+	consoleapi "github.com/tools4s3/console/api"
 	"go.uber.org/atomic"
 
 	"github.com/dustin/go-humanize"
