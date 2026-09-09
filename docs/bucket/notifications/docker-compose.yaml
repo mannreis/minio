@@ -70,6 +70,19 @@ services:
     hostname: mongo1.local
     ports:
       - "11017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoadmin
+      MONGO_INITDB_ROOT_PASSWORD: mongoadmin
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok' | grep 1"
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
     networks:
       event-notification:
         ipv4_address: 172.28.0.13

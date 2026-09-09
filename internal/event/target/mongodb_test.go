@@ -99,6 +99,39 @@ func TestMongoDBArgs(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "bad_auth",
+			fields: fields{
+				Enable:     true,
+				ConnString: "mongodb://admin:admin:test:214",
+				Database:   "minio-mongo",
+				Collection: "raw_format",
+				Format:     "raw",
+			},
+			wantErr: true,
+		},
+		{
+			name: "ok_auth",
+			fields: fields{
+				Enable:     true,
+				ConnString: "mongodb://admin:secret@test:214",
+				Database:   "minio-mongo",
+				Collection: "raw_format",
+				Format:     "raw",
+			},
+			wantErr: false,
+		},
+		{
+			name: "ok_db_auth",
+			fields: fields{
+				Enable:     true,
+				ConnString: "mongodb://admin:admin@test:214/databaseok",
+				Database:   "minio-mongo",
+				Collection: "raw_format",
+				Format:     "raw",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

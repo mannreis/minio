@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TESTS_DOCKER_CACHE=1
-TESTS_DOCKER_LEAVE_UP=1
-
+TESTS_DOCKER_CACHE=${TESTS_DOCKER_CACHE:-1}
+TESTS_DOCKER_LEAVE_UP=${TESTS_DOCKER_LEAVE_UP:-0}
 DOCKER_NETWORK_NAME="notifications_event-notification"
-mdbsh="docker run --network ${DOCKER_NETWORK_NAME} -ti --rm alpine/mongosh mongosh --quiet"
 DB_NAME="unqueued"
 
-MONGO_URI="mongodb://mongo1:27017"
+MONGO_USER='mongoadmin'
+MONGO_PASS='mongoadmin'
+MONGO_URI="mongodb://${MONGO_USER}:${MONGO_PASS}@mongo1:27017"
+MONGO_URI_PARAMS="?authSource=admin" # This is required otherwise authentication is done with speficed DB
+MONGO_CONNECTION_STRING="${MONGO_URI}/${DB_NAME}${MONGO_URI_PARAMS}"
+mdbsh="docker run --network ${DOCKER_NETWORK_NAME} -ti --rm alpine/mongosh mongosh -quiet ${MONGO_CONNECTION_STRING}"
 
 CLUSTERS=( # to match docker-compose.yaml
 	"http://0.0.0.0:11000"
@@ -31,7 +34,7 @@ done
 declare -A NOTIFICATION_TARGETS
 
 for format in {"raw","namespace","access"}; do
-	NOTIFICATION_TARGETS[mongo_"${format}"]='notify_mongodb:docker_'"${format}"' enable=on connection_string="mongodb://172.28.0.13:27017" database='"${DB_NAME}"' format='"${format}"' collection='"${format}"'' #queue_dir= queue_limit= batch_size batch_timeout client_cert client_key=
+	NOTIFICATION_TARGETS[mongo_"${format}"]='notify_mongodb:docker_'"${format}"' enable=on connection_string='"${MONGO_URI}"' database='"${DB_NAME}"' format='"${format}"' collection='"${format}"''
 done
 
 ARNS=()
@@ -90,8 +93,17 @@ function test_bucket_creation_spread_across_clusters() {
 		[namespace]=$((1 * N))
 	)
 	for collection in "${!kv[@]}"; do
-		${mdbsh} "${MONGO_URI}/${DB_NAME}" -f \
-			--eval 'if(db.'"${collection}"'.countDocuments() != '"${kv[${collection}]}"' ) {exit(123)}'
+		${mdbsh} -f \
+			--eval ' 
+			expected='"${kv[${collection}]}"';
+			count=db.'"${collection}"'.countDocuments();
+			if(count != expected) { 
+				print(
+					"Test object creation failed for collection '"${collection}"', "+
+					"expected: " + expected + ", got: " + count);
+			    exit(123)
+			}
+			print("ok: collection '"${collection}"' contains expected number of events:", expected)'
 	done
 
 	for i in "${!CLUSTERS[@]}"; do
@@ -123,8 +135,18 @@ function test_bucket_creation_spread_across_clusters() {
 	kv[access]=$((kv[access] + (2 * N * N)))
 
 	for collection in "${!kv[@]}"; do
-		${mdbsh} "${MONGO_URI}/${DB_NAME}" -f \
-			--eval 'if(db.'"${collection}"'.countDocuments() != '"${kv[${collection}]}"' ) { print("collection: '"${collection}"'"); exit(124)}'
+		${mdbsh} -f \
+			--eval '
+			expected='"${kv[${collection}]}"';
+			count=db.'"${collection}"'.countDocuments();
+			if(count != expected) { 
+				print(
+					"Test object read failed for collection '"${collection}"', "+
+					"expected: " + expected + ", got: " + count + "events");
+			    exit(124)
+			}
+			print("ok: collection '"${collection}"' contains expected number of events:", expected)'
+			#	if(db.'"${collection}"'.countDocuments() != '"${kv[${collection}]}"' ) { print("collection: '"${collection}"'"); exit(124)}'
 	done
 
 }
@@ -166,6 +188,8 @@ function setup_clusters {
 }
 
 function setup_targets_alias() {
+	#mongo has to be up by now
+
 	local alias="${1}"
 	# Setup notification targets
 	for t in "${!NOTIFICATION_TARGETS[@]}"; do
@@ -193,7 +217,7 @@ function main() {
 
 	cleanup
 	# Setup containers to run federated Minio + Mongo
-	docker-compose -f "${DOCKER_COMPOSE_FILE}" up -d --force-recreate -V
+	docker-compose -f "${DOCKER_COMPOSE_FILE}" up -d --force-recreate -V --wait
 	if [ -z ${TESTS_DOCKER_LEAVE_UP} ] || [ ${TESTS_DOCKER_LEAVE_UP} == 0 ]; then
 		trap "cleanup" ERR EXIT
 	else
