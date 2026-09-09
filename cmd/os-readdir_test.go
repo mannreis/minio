@@ -81,7 +81,7 @@ func setupTestReadDirFiles(t *testing.T) (testResults []result) {
 		name := fmt.Sprintf("file-%d", i)
 		if err := os.WriteFile(filepath.Join(dir, name), []byte{}, os.ModePerm); err != nil {
 			// For cleanup, its required to add these entries into test results.
-			testResults = append(testResults, result{dir, entries})
+			testResults = append(testResults, result{dir, entries}) //nolint:staticcheck //SA4006
 			t.Fatalf("Unable to create file, %s", err)
 		}
 		entries = append(entries, name)
@@ -106,7 +106,7 @@ func setupTestReadDirGeneric(t *testing.T) (testResults []result) {
 		name := fmt.Sprintf("file-%d", i)
 		if err := os.WriteFile(filepath.Join(dir, "mydir", name), []byte{}, os.ModePerm); err != nil {
 			// For cleanup, its required to add these entries into test results.
-			testResults = append(testResults, result{dir, entries})
+			testResults = append(testResults, result{dir, entries}) //nolint:staticcheck //SA4006
 			t.Fatalf("Unable to write file, %s", err)
 		}
 	}
@@ -131,7 +131,7 @@ func setupTestReadDirSymlink(t *testing.T) (testResults []result) {
 		name2 := fmt.Sprintf("file-%d", i+10)
 		if err := os.WriteFile(filepath.Join(dir, name1), []byte{}, os.ModePerm); err != nil {
 			// For cleanup, its required to add these entries into test results.
-			testResults = append(testResults, result{dir, entries})
+			testResults = append(testResults, result{dir, entries}) //nolint:staticcheck //SA4006
 			t.Fatalf("Unable to create a file, %s", err)
 		}
 		// Symlink will not be added to entries.

@@ -358,7 +358,7 @@ func (z *xlMetaV2VersionHeaderV2) UnmarshalMsg(bts []byte) (o []byte, e error) {
 		e = msgp.ArrayError{Wanted: 5, Got: zb0001}
 		return o, e
 	}
-	bts, e = msgp.ReadExactBytes(bts, (z.VersionID)[:])
+	bts, e = msgp.ReadExactBytes(bts, z.VersionID[:])
 	if e != nil {
 		e = msgp.WrapError(e, "VersionID")
 		return o, e
@@ -368,7 +368,7 @@ func (z *xlMetaV2VersionHeaderV2) UnmarshalMsg(bts []byte) (o []byte, e error) {
 		e = msgp.WrapError(e, "ModTime")
 		return o, e
 	}
-	bts, e = msgp.ReadExactBytes(bts, (z.Signature)[:])
+	bts, e = msgp.ReadExactBytes(bts, z.Signature[:])
 	if e != nil {
 		e = msgp.WrapError(e, "Signature")
 		return o, e
