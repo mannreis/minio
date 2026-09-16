@@ -5,7 +5,7 @@ linters:
     - durationcheck
     - forcetypeassert
     - gocritic
-    - gomodguard
+    - gomodguard_v2
     - govet
     - ineffassign
     - misspell

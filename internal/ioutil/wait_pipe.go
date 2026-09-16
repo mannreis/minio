@@ -58,7 +58,7 @@ func WaitPipe() (*PipeReader, *PipeWriter) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	return &PipeReader{
-			PipeReader: r,
+			PipeReader: r, //nolint:goimports,gofumpt
 			wait:       wg.Wait,
 		}, &PipeWriter{
 			PipeWriter: w,
