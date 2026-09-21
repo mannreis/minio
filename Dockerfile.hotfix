@@ -18,9 +18,9 @@ RUN curl -s -q https://dl.min.io/server/minio/hotfixes/linux-${TARGETARCH}/archi
     chmod +x /go/bin/minio
 
 # Download mc binary and signature files
-RUN curl -s -q https://dl.min.io/client/mc/release/linux-${TARGETARCH}/mc -o /go/bin/mc && \
-    curl -s -q https://dl.min.io/client/mc/release/linux-${TARGETARCH}/mc.minisig -o /go/bin/mc.minisig && \
-    curl -s -q https://dl.min.io/client/mc/release/linux-${TARGETARCH}/mc.sha256sum -o /go/bin/mc.sha256sum && \
+RUN curl -s -q https://dl.min.io/aistor/mc/release/linux-${TARGETARCH}/mc -o /go/bin/mc && \
+    curl -s -q https://dl.min.io/aistor/mc/release/linux-${TARGETARCH}/mc.minisig -o /go/bin/mc.minisig && \
+    curl -s -q https://dl.min.io/aistor/mc/release/linux-${TARGETARCH}/mc.sha256sum -o /go/bin/mc.sha256sum && \
     chmod +x /go/bin/mc
 
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
