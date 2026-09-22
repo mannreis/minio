@@ -28,7 +28,7 @@ if [ ! -f ./mc ]; then
 		;;
 	esac
 
-	wget -O mc https://dl.minio.io/client/mc/release/${os,,}-${arch,,}/mc &&
+	wget -O mc https://dl.min.io/aistor/mc/release/${os,,}-${arch,,}/mc &&
 		chmod +x mc
 fi
 

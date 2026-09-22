@@ -48,7 +48,7 @@ export MINIO_IDENTITY_LDAP_GROUP_SEARCH_BASE_DN="ou=swengg,dc=min,dc=io"
 export MINIO_IDENTITY_LDAP_GROUP_SEARCH_FILTER="(&(objectclass=groupOfNames)(member=%d))"
 
 if [ ! -f ./mc ]; then
-	wget -O mc https://dl.minio.io/client/mc/release/linux-amd64/mc &&
+	wget -O mc https://dl.min.io/aistor/mc/release/linux-amd64/mc &&
 		chmod +x mc
 fi
 
