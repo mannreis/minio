@@ -1,5 +1,10 @@
-FROM scratch
+FROM minio/minio:latest
 
-COPY minio /minio
+#COPY minio /minio
+COPY minio /usr/bin/minio
+
+ENTRYPOINT ["/usr/bin/docker-entrypoint.sh"]
+
+VOLUME ["/data"]
 
 CMD ["/minio"]
