@@ -51,7 +51,6 @@ require (
 	github.com/lithammer/shortuuid/v4 v4.2.0
 	github.com/miekg/dns v1.1.65
 	github.com/minio/cli v1.24.2
-	github.com/minio/console v1.7.7-0.20250905210349-2017f33b26e1
 	github.com/minio/csvparser v1.0.0
 	github.com/minio/dnscache v0.1.1
 	github.com/minio/dperf v0.6.3
@@ -89,6 +88,7 @@ require (
 	github.com/secure-io/sio-go v0.3.1
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/tinylib/msgp v1.4.0
+	github.com/tools4s3/console v1.7.7-0.20250905210349-2017f33b26e1-patched
 	github.com/valyala/bytebufferpool v1.0.0
 	github.com/xdg/scram v1.0.5
 	github.com/zeebo/xxh3 v1.0.2
