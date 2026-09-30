@@ -44,7 +44,7 @@ minio server --address 127.0.0.1:9004 "http://127.0.0.1:9003/tmp/siteb/data/dist
 echo "done"
 
 if [ ! -f ./mc ]; then
-	wget --quiet -O mc https://dl.minio.io/client/mc/release/linux-amd64/mc &&
+	wget --quiet -O mc https://dl.min.io/aistor/mc/release/linux-amd64/mc &&
 		chmod +x mc
 fi
 

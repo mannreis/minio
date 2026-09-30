@@ -9,7 +9,7 @@ pkill kes
 rm -rf /tmp/xl
 
 if [ ! -f ./mc ]; then
-	wget --quiet -O mc https://dl.minio.io/client/mc/release/linux-amd64/mc &&
+	wget --quiet -O mc https://dl.min.io/aistor/mc/release/linux-amd64/mc &&
 		chmod +x mc
 fi
 

@@ -53,7 +53,7 @@ minio server --address ":9003" --console-address ":12000" /tmp/minio3/{1...4} >/
 site3_pid=$!
 
 if [ ! -f ./mc ]; then
-	wget -O mc https://dl.minio.io/client/mc/release/linux-amd64/mc &&
+	wget -O mc https://dl.min.io/aistor/mc/release/linux-amd64/mc &&
 		chmod +x mc
 fi
 

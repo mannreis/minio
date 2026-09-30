@@ -393,7 +393,7 @@ function test_resiliency_healing_inlined_metadata() {
 
 function main() {
 	if [ ! -f ./mc ]; then
-		wget -q https://dl.minio.io/client/mc/release/linux-amd64/mc && chmod +x ./mc
+		wget -q https://dl.min.io/aistor/mc/release/linux-amd64/mc && chmod +x ./mc
 	fi
 
 	export MC_HOST_myminio=http://minioadmin:minioadmin@localhost:9000
