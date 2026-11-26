@@ -34,6 +34,7 @@ type Config struct {
 	PostgreSQL    map[string]target.PostgreSQLArgs    `json:"postgresql"`
 	Redis         map[string]target.RedisArgs         `json:"redis"`
 	Webhook       map[string]target.WebhookArgs       `json:"webhook"`
+	MongoDB       map[string]target.MongoDBArgs       `json:"mongodb"`
 }
 
 const (
@@ -51,6 +52,7 @@ func NewConfig() Config {
 		Redis:         make(map[string]target.RedisArgs),
 		MySQL:         make(map[string]target.MySQLArgs),
 		Kafka:         make(map[string]target.KafkaArgs),
+		MongoDB:       make(map[string]target.MongoDBArgs),
 		Webhook:       make(map[string]target.WebhookArgs),
 		PostgreSQL:    make(map[string]target.PostgreSQLArgs),
 		Elasticsearch: make(map[string]target.ElasticsearchArgs),
@@ -62,6 +64,7 @@ func NewConfig() Config {
 	cfg.Redis[defaultTarget] = target.RedisArgs{}
 	cfg.MySQL[defaultTarget] = target.MySQLArgs{}
 	cfg.Kafka[defaultTarget] = target.KafkaArgs{}
+	cfg.MongoDB[defaultTarget] = target.MongoDBArgs{}
 	cfg.Webhook[defaultTarget] = target.WebhookArgs{}
 	cfg.PostgreSQL[defaultTarget] = target.PostgreSQLArgs{}
 	cfg.Elasticsearch[defaultTarget] = target.ElasticsearchArgs{}

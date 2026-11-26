@@ -22,6 +22,9 @@ import (
 )
 
 const (
+	// RawFormat - raw event format used in Mongo targets.
+	RawFormat = "raw"
+
 	// NamespaceFormat - namespace log format used in some event targets.
 	NamespaceFormat = "namespace"
 

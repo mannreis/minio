@@ -139,6 +139,7 @@ const (
 	NotifyPostgresSubSys = madmin.NotifyPostgresSubSys
 	NotifyRedisSubSys    = madmin.NotifyRedisSubSys
 	NotifyWebhookSubSys  = madmin.NotifyWebhookSubSys
+	NotifyMongoDBSubSys  = "notify_mongodb"
 
 	// Add new constants here (similar to above) if you add new fields to config.
 )
@@ -160,6 +161,7 @@ var NotifySubSystems = set.CreateStringSet(
 	NotifyPostgresSubSys,
 	NotifyRedisSubSys,
 	NotifyWebhookSubSys,
+	NotifyMongoDBSubSys,
 )
 
 // LambdaSubSystems - all lambda sub-systems
@@ -175,7 +177,10 @@ var LoggerSubSystems = set.CreateStringSet(
 )
 
 // SubSystems - all supported sub-systems
-var SubSystems = madmin.SubSystems
+var SubSystems = func() set.StringSet {
+	subsystems := append([]string{NotifyMongoDBSubSys}, madmin.SubSystems.ToSlice()...)
+	return set.CreateStringSet(subsystems...)
+}()
 
 // SubSystemsDynamic - all sub-systems that have dynamic config.
 var SubSystemsDynamic = set.CreateStringSet(
